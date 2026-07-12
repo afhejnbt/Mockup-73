@@ -1,8 +1,8 @@
 FROM python:3.9-slim
 
-# تثبيت المكتبات النظامية الأساسية لمعالجة الصور
+# تحديث حزم النظام وتثبيت المكتبات الحديثة والمستقرة لمعالجة الصور
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -12,11 +12,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# نسخ باقي ملفات المشروع بالكامل إلى السيرفر
+# نسخ باقي ملفات المشروع بالكامل
 COPY . .
 
-# فتح البورت 7860 وهو البورت الافتراضي لـ Hugging Face
-EXPOSE 7860
+# فتح بورت التشغيل الافتراضي لـ Render
+EXPOSE 10000
 
-# تشغيل الباك إند عبر خادم gunicorn المستقر
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "app:app"]
+# تشغيل التطبيق عبر خادم gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:10000", "app:app"]
