@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup-73 | Workspace Editor</title>
+    <!-- Cropper JS CSS CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <!-- Link to our global stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Main Navigation Header -->
+    <header class="main-header">
+        <div class="logo-container">
+            <img src="logo.png" alt="Mockup-73 Logo" class="brand-logo">
+        </div>
+        <div class="header-actions">
+            <span class="status-badge">Workspace App</span>
+        </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <div class="app-container">
+        
+        <!-- Sidebar Controls Container -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <label for="mockupSelect" class="section-title">1. Select Template</label>
+                <select id="mockupSelect" class="styled-select">
+                    <!-- Options are populated dynamically via JavaScript -->
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <span class="section-title">2. Upload Designs</span>
+                <!-- Container where target upload buttons appear dynamically based on template layers -->
+                <div id="uploadInputsContainer" class="inputs-container">
+                    <p class="placeholder-text">Please select a mockup template first.</p>
+                </div>
+            </div>
+
+            <div class="sidebar-actions" style="margin-top: auto;">
+                <button id="generateBtn" class="btn btn-primary" disabled>Generate Mockup</button>
+            </div>
+        </aside>
+
+        <!-- Preview Canvas Workspace -->
+        <main class="preview-area">
+            <div class="workspace-canvas" id="workspaceCanvas">
+                <p class="canvas-hint">Your mockup live preview will be displayed here</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Image Cropping Modal Pop-up -->
+    <div class="crop-modal" id="cropModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adjust and Crop Image</h3>
+            </div>
+            <div class="modal-body">
+                <div class="img-container">
+                    <img id="imageToCrop" src="" alt="Source image for cropping">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelCropBtn" class="btn btn-secondary">Cancel</button>
+                <button id="saveCropBtn" class="btn btn-purple">Apply & Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Application Footer -->
+    <footer class="main-footer">
+        <p>&copy; 2026 Mockup-73. All rights reserved.</p>
+    </footer>
+
+    <!-- Core Dynamic Scripts and Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="editor.js"></script>
+</body>
+</html>

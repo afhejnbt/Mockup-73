@@ -1,0 +1,296 @@
+/* ==========================================
+   Mockup-73 Global Styles & Variable Design
+   ========================================== */
+
+:root {
+    --primary-purple: #8c2693; /* درجة البنفسجي الخاصة بشعارك */
+    --accent-purple: #a63cb1;  /* درجة موف أفتوح للتفاعلات والـ Hover */
+    --bg-white: #ffffff;
+    --bg-light: #f8f9fa;
+    --border-color: #e0e0e0;
+    --text-dark: #212121;
+    --text-muted: #757575;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Base Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Global Header Components */
+.main-header {
+    background-color: var(--bg-white);
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+}
+
+.brand-logo {
+    height: 45px;
+    width: auto;
+    object-fit: contain;
+}
+
+.status-badge {
+    background-color: #f3e5f5;
+    color: var(--primary-purple);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Workspace Grid/Flex Layout Structure */
+.app-container {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 110px); /* 70px header + 40px footer */
+}
+
+/* Sidebar Panel Layout */
+.sidebar {
+    width: 340px;
+    background-color: var(--bg-white);
+    border-right: 1px solid var(--border-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+}
+
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Form Interaction Controls */
+.styled-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.styled-select:focus {
+    border-color: var(--primary-purple);
+}
+
+.inputs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.placeholder-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Dynamic Asset Upload Row */
+.upload-row {
+    background: var(--bg-light);
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.upload-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-purple);
+}
+
+.styled-file-input {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Global Buttons Actions */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background-color 0.2s, transform 0.1s;
+    text-align: center;
+    display: inline-block;
+}
+
+.btn-primary {
+    background-color: var(--primary-purple);
+    color: #ffffff;
+    width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-purple);
+}
+
+.btn-primary:disabled {
+    background-color: var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: var(--border-color);
+    color: var(--text-dark);
+}
+
+.btn-secondary:hover {
+    background-color: #d5d5d5;
+}
+
+.btn-purple {
+    background-color: var(--primary-purple);
+    color: #ffffff;
+}
+
+.btn-purple:hover {
+    background-color: var(--accent-purple);
+}
+
+/* Live Main Workspace Canvas View */
+.preview-area {
+    flex: 1;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    overflow: auto;
+}
+
+.workspace-canvas {
+    background: #ffffff;
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.canvas-hint {
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+/* Cropper Modal Overlay Dialog */
+.crop-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.crop-modal.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header, .modal-footer {
+    padding: 16px 24px;
+    background-color: var(--bg-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    font-size: 16px;
+    color: var(--text-dark);
+}
+
+.modal-body {
+    padding: 24px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #1a1a1a; /* خلفية داكنة لتوفر تباين أثناء القص */
+}
+
+.img-container {
+    max-width: 100%;
+    max-height: 350px;
+}
+
+.modal-footer {
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Global Footer Component */
+.main-footer {
+    background-color: var(--bg-white);
+    border-top: 1px solid var(--border-color);
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    height: 40px;
+}
