@@ -113,16 +113,16 @@ def generate_mockup():
             h_user, w_user = user_img.shape[:2]
 
             if ph_config["type"] == "flat":
-                            # الدمج المسطح العادي المباشر
-                            x, y, w, h = ph_config["x"], ph_config["y"], ph_config["w"], ph_config["h"]
-                            resized_user = cv2.resize(user_img, (w, h), interpolation=cv2.INTER_AREA)
+                # الدمج المسطح العادي المباشر
+                x, y, w, h = ph_config["x"], ph_config["y"], ph_config["w"], ph_config["h"]
+                resized_user = cv2.resize(user_img, (w, h), interpolation=cv2.INTER_AREA)
                 
                 # فصل قنوات الألوان والشفافية بشكل آمن لمنع أخطاء الـ broadcasting
                 alpha = resized_user[:, :, 3] / 255.0
                 
                 for c in range(0, 3):
                     base_img[y:y+h, x:x+w, c] = (resized_user[:, :, c] * alpha + 
-                                                 base_img[y:y+h, x:x+w, c] * (1.0 - alpha)).astype(np.uint8)                
+                                                 base_img[y:y+h, x:x+w, c] * (1.0 - alpha)).astype(np.uint8)
             
             elif ph_config["type"] == "warp":
                 # الدمج المائل ثنائي الأبعاد باستخدام المنظور (Perspective Transform)
@@ -149,7 +149,7 @@ def generate_mockup():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-
+        
 # تأكد أن دالة العرض تبحث في المجلد الصحيح وتمرر الملف مباشرة
 # الدالة القديمة (اتركها كما هي)
 @app.route('/')
