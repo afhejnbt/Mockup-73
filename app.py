@@ -10,9 +10,6 @@ from PIL import Image
 
 app = Flask(__name__)
 CORS(app)
-@app.route('/')
-def index():
-    return send_from_directory('.', 'index.html')
 
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -153,10 +150,9 @@ def generate_mockup():
 
 # تأكد أن دالة العرض تبحث في المجلد الصحيح وتمرر الملف مباشرة
 @app.route('/')
-def index():
+def serve_index():
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
 
 if __name__ == '__main__':
-    # قراءة البورت ديناميكياً من نظام Render لتفادي أي تعارض في الحاويات
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port, debug=False)
