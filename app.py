@@ -149,10 +149,16 @@ def generate_mockup():
         return jsonify({"success": False, "error": str(e)}), 500
 
 # تأكد أن دالة العرض تبحث في المجلد الصحيح وتمرر الملف مباشرة
+# الدالة القديمة (اتركها كما هي)
 @app.route('/')
 def serve_index():
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
 
+# 🌟 أضف هذه الدالة الجديدة تحتها مباشرة لخدمة كافة الملفات الأخرى
+@app.route('/<path:filename>')
+def serve_static_files(filename):
+    return send_from_directory(os.path.dirname(os.path.abspath(__file__)), filename)
+    
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port, debug=False)
