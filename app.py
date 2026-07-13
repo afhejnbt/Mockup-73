@@ -14,7 +14,7 @@ CORS(app)
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# 9 قوالب معتمدة بإحداثياتها الهندسية الدقيقة المستخرجة من كلود
+# 9 قوالب معتمدة بإحداثياتها الهندسية الدقيقة
 TEMPLATES_CONFIG = {
     "01_business_cards": {
         "bg_image": "01_business_cards.png",
@@ -76,19 +76,22 @@ TEMPLATES_CONFIG = {
 }
 
 def decode_base64_image(base64_str):
-    """تحويل الصورة المستقبلة من الجافاسكربت (Base64) إلى مصفوفة OpenCV"""
+    """تحويل آمن ومضمون للصورة المستقبلة لضمان وجود 4 قنوات ألوان دائماً"""
     if "data:image" in base64_str:
         base64_str = base64_str.split(",")[1]
     img_data = base64.b64decode(base64_str)
-    image = Image.open(BytesIO(img_data)).convert("RGBA")
-    return cv2.cvtColor(np.array(image), cv2.COLOR_RGBA2BGRA)
+    
+    # استخدام PIL للتأكد من نمط الألوان RGBA بشكل صارم
+    pil_img = Image.open(BytesIO(img_data)).convert("RGBA")
+    cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGBA2BGRA)
+    return cv_img
 
 @app.route('/api/generate', methods=['POST'])
 def generate_mockup():
     try:
         data = request.json
         template_key = data.get("templateKey")
-        uploaded_images = data.get("images")  # دكشنري يحتوي على { placeholder_id: base64_str }
+        uploaded_images = data.get("images")
 
         if not template_key or template_key not in TEMPLATES_CONFIG:
             return jsonify({"success": False, "error": "Invalid template key"}), 400
@@ -99,12 +102,14 @@ def generate_mockup():
         if not os.path.exists(bg_path):
             return jsonify({"success": False, "error": f"Background image {bg_path} not found"}), 404
 
-        # قراءة صورة الخلفية النظيفة بصيغة RGBA
+        # قراءة الخلفية مع دعم الشفافية
         base_img = cv2.imread(bg_path, cv2.IMREAD_UNCHANGED)
-        if base_img.shape[2] == 3:
+        if base_img is None:
+            return jsonify({"success": False, "error": f"Failed to load background image"}), 500
+            
+        if len(base_img.shape) == 2 or base_img.shape[2] == 3:
             base_img = cv2.cvtColor(base_img, cv2.COLOR_BGR2BGRA)
 
-        # دمج كل طبقة مرفوعة في مكانها الصحيح
         for ph_id, ph_config in config["placeholders"].items():
             if ph_id not in uploaded_images:
                 continue
@@ -113,39 +118,43 @@ def generate_mockup():
             h_user, w_user = user_img.shape[:2]
 
             if ph_config["type"] == "flat":
-                # الدمج المسطح العادي المباشر
                 x, y, w, h = ph_config["x"], ph_config["y"], ph_config["w"], ph_config["h"]
                 
-                # تغيير الحجم ليتطابق مع الـ placeholder تماماً
+                # تغيير حجم صورة المستخدم لتطابق أبعاد الـ placeholder تماماً وبدقة
                 resized_user = cv2.resize(user_img, (w, h), interpolation=cv2.INTER_AREA)
                 
-                # استخراج جزء الخلفية الدقيق (ROI) لضمان تطابق الأبعاد البرمجية
+                # استخراج مساحة العمل المستهدفة من الخلفية
                 bg_roi = base_img[y:y+h, x:x+w]
                 
-                # تجهيز مصفوفة الألفا بصيغة ثلاثية الأبعاد متوافقة مع أبعاد الـ ROI
-                alpha = resized_user[:, :, 3:4] / 255.0
+                # التأكد من تطابق حجم الـ ROI الفعلي مع أبعاد الريزايز لتفادي أي بث مصفوفات خاطئ
+                if bg_roi.shape[:2] != resized_user.shape[:2]:
+                    resized_user = cv2.resize(resized_user, (bg_roi.shape[1], bg_roi.shape[0]), interpolation=cv2.INTER_AREA)
                 
-                # دمج ألوان التصميم مع الخلفية عبر المصفوفات مباشرة بدون حلقات تكرارية
-                blended_roi = (resized_user[:, :, :3] * alpha + bg_roi[:, :, :3] * (1.0 - alpha)).astype(np.uint8)
+                # فصل قنوات الألوان والشفافية بشكل دقيق كـ float32 لمنع الـ Overflow
+                alpha = (resized_user[:, :, 3] / 255.0)[:, :, np.newaxis]
                 
-                # إعادة تثبيت الجزء المدموج في مكانه على الخلفية الأساسية
-                base_img[y:y+h, x:x+w, :3] = blended_roi
+                user_rgb = resized_user[:, :, :3].astype(np.float32)
+                bg_rgb = bg_roi[:, :, :3].astype(np.float32)
+                
+                # عملية الدمج الحسابي النظيفة
+                blended_rgb = (user_rgb * alpha + bg_rgb * (1.0 - alpha)).astype(np.uint8)
+                
+                # إعادة تعيين النتيجة داخل مصفوفة الخلفية الأساسية
+                base_img[y:y+h, x:x+w, :3] = blended_rgb
             
             elif ph_config["type"] == "warp":
-                # الدمج المائل ثنائي الأبعاد باستخدام المنظور (Perspective Transform)
                 pts_src = np.array([[0, 0], [w_user - 1, 0], [w_user - 1, h_user - 1], [0, h_user - 1]], dtype=np.float32)
                 pts_dst = np.array(ph_config["coords"], dtype=np.float32)
                 
-                # حساب مصفوفة التحويل الهندسية
                 matrix = cv2.getPerspectiveTransform(pts_src, pts_dst)
-                
-                # تحوير صورة المستخدم لتطابق المنظور المائل
                 warped_user = cv2.warpPerspective(user_img, matrix, (base_img.shape[1], base_img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
                 
-                # دمج الأجزاء المموهة الشفافة فوق الخلفية
-                alpha_warped = warped_user[:, :, 3] / 255.0
-                for c in range(0, 3):
-                    base_img[:, :, c] = warped_user[:, :, c] * alpha_warped + base_img[:, :, c] * (1.0 - alpha_warped)
+                alpha_warped = (warped_user[:, :, 3] / 255.0)[:, :, np.newaxis]
+                
+                user_rgb = warped_user[:, :, :3].astype(np.float32)
+                bg_rgb = base_img[:, :, :3].astype(np.float32)
+                
+                base_img[:, :, :3] = (user_rgb * alpha_warped + bg_rgb * (1.0 - alpha_warped)).astype(np.uint8)
 
         # حفظ النتيجة النهائية
         output_filename = f"mockup_{template_key}.png"
