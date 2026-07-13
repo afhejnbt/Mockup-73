@@ -113,14 +113,16 @@ def generate_mockup():
             h_user, w_user = user_img.shape[:2]
 
             if ph_config["type"] == "flat":
-                # الدمج المسطح العادي المباشر
-                x, y, w, h = ph_config["x"], ph_config["y"], ph_config["w"], ph_config["h"]
-                resized_user = cv2.resize(user_img, (w, h), interpolation=cv2.INTER_AREA)
+                            # الدمج المسطح العادي المباشر
+                            x, y, w, h = ph_config["x"], ph_config["y"], ph_config["w"], ph_config["h"]
+                            resized_user = cv2.resize(user_img, (w, h), interpolation=cv2.INTER_AREA)
                 
-                # دمج الطبقات مع مراعاة قنوات الشفافية (Alpha Channel)
+                # فصل قنوات الألوان والشفافية بشكل آمن لمنع أخطاء الـ broadcasting
+                alpha = resized_user[:, :, 3] / 255.0
+                
                 for c in range(0, 3):
-                    base_img[y:y+h, x:x+w, c] = resized_user[:, :, c] * (resized_user[:, :, 3] / 255.0) + \
-                                                base_img[y:y+h, x:x+w, c] * (1.0 - resized_user[:, :, 3] / 255.0)
+                    base_img[y:y+h, x:x+w, c] = (resized_user[:, :, c] * alpha + 
+                                                 base_img[y:y+h, x:x+w, c] * (1.0 - alpha)).astype(np.uint8)                
             
             elif ph_config["type"] == "warp":
                 # الدمج المائل ثنائي الأبعاد باستخدام المنظور (Perspective Transform)
@@ -158,7 +160,7 @@ def serve_index():
 @app.route('/<path:filename>')
 def serve_static_files(filename):
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), filename)
-    
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port, debug=False)
