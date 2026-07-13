@@ -81,7 +81,6 @@ def decode_base64_image(base64_str):
         base64_str = base64_str.split(",")[1]
     img_data = base64.b64decode(base64_str)
     
-    # استخدام PIL للتأكد من نمط الألوان RGBA بشكل صارم
     pil_img = Image.open(BytesIO(img_data)).convert("RGBA")
     cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGBA2BGRA)
     return cv_img
@@ -102,7 +101,6 @@ def generate_mockup():
         if not os.path.exists(bg_path):
             return jsonify({"success": False, "error": f"Background image {bg_path} not found"}), 404
 
-        # قراءة الخلفية مع دعم الشفافية
         base_img = cv2.imread(bg_path, cv2.IMREAD_UNCHANGED)
         if base_img is None:
             return jsonify({"success": False, "error": f"Failed to load background image"}), 500
@@ -120,26 +118,17 @@ def generate_mockup():
             if ph_config["type"] == "flat":
                 x, y, w, h = ph_config["x"], ph_config["y"], ph_config["w"], ph_config["h"]
                 
-                # تغيير حجم صورة المستخدم لتطابق أبعاد الـ placeholder تماماً وبدقة
                 resized_user = cv2.resize(user_img, (w, h), interpolation=cv2.INTER_AREA)
-                
-                # استخراج مساحة العمل المستهدفة من الخلفية
                 bg_roi = base_img[y:y+h, x:x+w]
                 
-                # التأكد من تطابق حجم الـ ROI الفعلي مع أبعاد الريزايز لتفادي أي بث مصفوفات خاطئ
                 if bg_roi.shape[:2] != resized_user.shape[:2]:
                     resized_user = cv2.resize(resized_user, (bg_roi.shape[1], bg_roi.shape[0]), interpolation=cv2.INTER_AREA)
                 
-                # فصل قنوات الألوان والشفافية بشكل دقيق كـ float32 لمنع الـ Overflow
                 alpha = (resized_user[:, :, 3] / 255.0)[:, :, np.newaxis]
-                
                 user_rgb = resized_user[:, :, :3].astype(np.float32)
                 bg_rgb = bg_roi[:, :, :3].astype(np.float32)
                 
-                # عملية الدمج الحسابي النظيفة
                 blended_rgb = (user_rgb * alpha + bg_rgb * (1.0 - alpha)).astype(np.uint8)
-                
-                # إعادة تعيين النتيجة داخل مصفوفة الخلفية الأساسية
                 base_img[y:y+h, x:x+w, :3] = blended_rgb
             
             elif ph_config["type"] == "warp":
@@ -150,7 +139,6 @@ def generate_mockup():
                 warped_user = cv2.warpPerspective(user_img, matrix, (base_img.shape[1], base_img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
                 
                 alpha_warped = (warped_user[:, :, 3] / 255.0)[:, :, np.newaxis]
-                
                 user_rgb = warped_user[:, :, :3].astype(np.float32)
                 bg_rgb = base_img[:, :, :3].astype(np.float32)
                 
@@ -161,10 +149,16 @@ def generate_mockup():
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         cv2.imwrite(output_path, base_img)
 
+        # نعيد المسار النسبي المباشر الذي يفهمه المتصفح ليعمل العرض والتحميل بنجاح
         return jsonify({"success": True, "downloadUrl": f"/outputs/{output_filename}"})
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+# 🌟 هذا هو المسار السحري الجديد الذي سيخدم الصور ويجعلها تظهر وتتحمل بنجاح!
+@app.route('/outputs/<path:filename>')
+def serve_output_files(filename):
+    return send_from_directory(os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_DIR), filename)
 
 @app.route('/')
 def serve_index():
