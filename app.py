@@ -115,14 +115,21 @@ def generate_mockup():
             if ph_config["type"] == "flat":
                 # الدمج المسطح العادي المباشر
                 x, y, w, h = ph_config["x"], ph_config["y"], ph_config["w"], ph_config["h"]
+                
+                # تغيير الحجم ليتطابق مع الـ placeholder تماماً
                 resized_user = cv2.resize(user_img, (w, h), interpolation=cv2.INTER_AREA)
                 
-                # فصل قنوات الألوان والشفافية بشكل آمن لمنع أخطاء الـ broadcasting
-                alpha = resized_user[:, :, 3] / 255.0
+                # استخراج جزء الخلفية الدقيق (ROI) لضمان تطابق الأبعاد البرمجية
+                bg_roi = base_img[y:y+h, x:x+w]
                 
-                for c in range(0, 3):
-                    base_img[y:y+h, x:x+w, c] = (resized_user[:, :, c] * alpha + 
-                                                 base_img[y:y+h, x:x+w, c] * (1.0 - alpha)).astype(np.uint8)
+                # تجهيز مصفوفة الألفا بصيغة ثلاثية الأبعاد متوافقة مع أبعاد الـ ROI
+                alpha = resized_user[:, :, 3:4] / 255.0
+                
+                # دمج ألوان التصميم مع الخلفية عبر المصفوفات مباشرة بدون حلقات تكرارية
+                blended_roi = (resized_user[:, :, :3] * alpha + bg_roi[:, :, :3] * (1.0 - alpha)).astype(np.uint8)
+                
+                # إعادة تثبيت الجزء المدموج في مكانه على الخلفية الأساسية
+                base_img[y:y+h, x:x+w, :3] = blended_roi
             
             elif ph_config["type"] == "warp":
                 # الدمج المائل ثنائي الأبعاد باستخدام المنظور (Perspective Transform)
@@ -149,18 +156,15 @@ def generate_mockup():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-        
-# تأكد أن دالة العرض تبحث في المجلد الصحيح وتمرر الملف مباشرة
-# الدالة القديمة (اتركها كما هي)
+
 @app.route('/')
 def serve_index():
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
 
-# 🌟 أضف هذه الدالة الجديدة تحتها مباشرة لخدمة كافة الملفات الأخرى
 @app.route('/<path:filename>')
 def serve_static_files(filename):
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), filename)
-
+    
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port, debug=False)
