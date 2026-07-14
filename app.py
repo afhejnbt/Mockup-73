@@ -14,63 +14,65 @@ CORS(app)
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# 9 قوالب معتمدة بإحداثياتها الهندسية الدقيقة
+# 9 قوالب معتمدة بإحداثياتها الهندسية الدقيقة (تم تحويل قوالب البوستر إلى نظام Warp لمنع الإزاحة)
 TEMPLATES_CONFIG = {
     "01_business_cards": {
         "bg_image": "01_business_cards.png",
         "placeholders": {
-            "card_top_face": {"type": "warp", "coords": [[473,191], [723,281], [538,426], [288,336]]},
-            "card_bottom_face": {"type": "warp", "coords": [[391,373], [641,463], [456,608], [206,518]]}
+            "card_top_face": {"type": "warp", "coords": [[473, 191], [723, 281], [538, 426], [288, 336]]},
+            "card_bottom_face": {"type": "warp", "coords": [[391, 373], [641, 463], [456, 608], [206, 518]]}
         }
     },
     "02_poster_flat": {
         "bg_image": "02_poster_flat.png",
         "placeholders": {
-            "poster_face": {"type": "flat", "x": 195, "y": 170, "w": 525, "h": 745}
+            # تم تحويله إلى warp لضمان تطابق الأبعاد الأربعة للورقة تماماً
+            "poster_face": {"type": "warp", "coords": [[195, 170], [720, 170], [720, 915], [195, 915]]}
         }
     },
     "03_poster_hanging_clips": {
         "bg_image": "03_poster_hanging_clips.png",
         "placeholders": {
-            "poster_face": {"type": "flat", "x": 296, "y": 207, "w": 410, "h": 585}
+            # تم تحويله إلى warp لضمان ثبات الزوايا الأربعة مع مشابك التعليق
+            "poster_face": {"type": "warp", "coords": [[296, 207], [706, 207], [706, 792], [296, 792]]}
         }
     },
     "04_trifold_brochure": {
         "bg_image": "04_trifold_brochure.png",
         "placeholders": {
-            "left_panel": {"type": "warp", "coords": [[269,287], [354,271], [354,496], [269,512]]},
-            "center_panel": {"type": "warp", "coords": [[354,271], [442,267], [442,498], [354,496]]},
-            "right_panel": {"type": "warp", "coords": [[442,267], [530,287], [530,515], [442,498]]}
+            "left_panel": {"type": "warp", "coords": [[269, 287], [354, 271], [354, 496], [269, 512]]},
+            "center_panel": {"type": "warp", "coords": [[354, 271], [442, 267], [442, 498], [354, 496]]},
+            "right_panel": {"type": "warp", "coords": [[442, 267], [530, 287], [530, 515], [442, 498]]}
         }
     },
     "05_folded_card_standing": {
         "bg_image": "05_folded_card_standing.png",
         "placeholders": {
-            "front_cover": {"type": "warp", "coords": [[436,239], [563,220], [563,542], [436,561]]}
+            "front_cover": {"type": "warp", "coords": [[436, 239], [563, 220], [563, 542], [436, 561]]}
         }
     },
     "06_paper_bag_white": {
         "bg_image": "06_paper_bag_white.png",
         "placeholders": {
-            "bag_front_face": {"type": "warp", "coords": [[313,295], [486,270], [486,530], [313,555]]}
+            "bag_front_face": {"type": "warp", "coords": [[313, 295], [486, 270], [486, 530], [313, 555]]}
         }
     },
     "07_paper_bag_kraft": {
         "bg_image": "07_paper_bag_kraft.png",
         "placeholders": {
-            "bag_front_face": {"type": "warp", "coords": [[312,284], [488,257], [488,543], [312,570]]}
+            "bag_front_face": {"type": "warp", "coords": [[312, 284], [488, 257], [488, 543], [312, 570]]}
         }
     },
     "08_book_thin": {
         "bg_image": "08_book_thin.png",
         "placeholders": {
-            "cover_face": {"type": "warp", "coords": [[302,246], [497,220], [502,527], [307,553]]}
+            "cover_face": {"type": "warp", "coords": [[302, 246], [497, 220], [502, 527], [307, 553]]}
         }
     },
     "10_rollup_banner": {
         "bg_image": "10_rollup_banner.png",
         "placeholders": {
-            "banner_face": {"type": "warp", "coords": [[311,193], [489,193], [489,607], [311,607]]}
+            "banner_face": {"type": "warp", "coords": [[311, 193], [489, 193], [489, 607], [311, 607]]}
         }
     }
 }
@@ -90,7 +92,11 @@ def generate_mockup():
     try:
         data = request.json
         template_key = data.get("templateKey")
-        uploaded_images = data.get("images")
+        uploaded_images = data.get("images", {})
+
+        print(f"--- GENERATING MOCKUP ---")
+        print(f"Template Key: {template_key}")
+        print(f"Received placeholders: {list(uploaded_images.keys())}")
 
         if not template_key or template_key not in TEMPLATES_CONFIG:
             return jsonify({"success": False, "error": "Invalid template key"}), 400
@@ -108,10 +114,21 @@ def generate_mockup():
         if len(base_img.shape) == 2 or base_img.shape[2] == 3:
             base_img = cv2.cvtColor(base_img, cv2.COLOR_BGR2BGRA)
 
+        # حل تلقائي في حال حدوث عدم تطابق في مسميات المفاتيح المستلمة لصورة واحدة
+        placeholders_in_config = list(config["placeholders"].keys())
+        if len(uploaded_images) == 1 and len(placeholders_in_config) == 1:
+            actual_key_received = list(uploaded_images.keys())[0]
+            expected_key = placeholders_in_config[0]
+            if actual_key_received != expected_key:
+                print(f"Fixing mismatch: mapping {actual_key_received} to expected {expected_key}")
+                uploaded_images[expected_key] = uploaded_images[actual_key_received]
+
         for ph_id, ph_config in config["placeholders"].items():
             if ph_id not in uploaded_images:
+                print(f"Skipping placeholder {ph_id} - not found in uploaded images")
                 continue
 
+            print(f"Processing placeholder: {ph_id}")
             user_img = decode_base64_image(uploaded_images[ph_id])
             h_user, w_user = user_img.shape[:2]
 
@@ -149,13 +166,13 @@ def generate_mockup():
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         cv2.imwrite(output_path, base_img)
 
-        # نعيد المسار النسبي المباشر الذي يفهمه المتصفح ليعمل العرض والتحميل بنجاح
+        print(f"Mockup generated successfully at: {output_path}")
         return jsonify({"success": True, "downloadUrl": f"/outputs/{output_filename}"})
 
     except Exception as e:
+        print(f"Error during generation: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-# 🌟 هذا هو المسار السحري الجديد الذي سيخدم الصور ويجعلها تظهر وتتحمل بنجاح!
 @app.route('/outputs/<path:filename>')
 def serve_output_files(filename):
     return send_from_directory(os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_DIR), filename)
