@@ -204,16 +204,16 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     generateBtn.textContent = "Generating...";
 
     try {
-        const response = await fetch('/api/generate', {  // تم تبسيط الرابط ليعمل داخلياً تلقائياً!
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            templateKey: currentSelectedKey,
-            images: croppedImagesStorage
-        })
-    });
+        const response = await fetch('/api/generate', {  
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                templateKey: currentSelectedKey,
+                images: croppedImagesStorage
+            })
+        });
 
         const result = await response.json();
 
@@ -221,12 +221,15 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
             generateBtn.textContent = "Generate Mockup";
             generateBtn.disabled = false;
             
+            // 🌟 تم تصحيح المسار هنا ليكون ديناميكياً ويقرأ مباشرة من السيرفر الحالي
+            const relativeUrl = result.downloadUrl; 
+            
             // عرض النتيجة النهائية المدمجة في مساحة العمل فوراً للمستخدم ليعاينها!
             canvas.innerHTML = `
                 <div style="text-align:center; width:100%; height:100%;">
-                    <img src="https://studious-space-orbit-97x4x44wpw692xqqv-5000.app.github.dev/${result.downloadUrl}" alt="Final Mockup" style="max-width:100%; max-height:85%; object-fit:contain;">
+                    <img src="${relativeUrl}" alt="Final Mockup" style="max-width:100%; max-height:85%; object-fit:contain;">
                     <br>
-                    <a href="https://studious-space-orbit-97x4x44wpw692xqqv-5000.app.github.dev/${result.downloadUrl}" download class="btn btn-purple" style="width:auto; margin-top:10px; padding: 6px 20px;">Download High-Res Mockup</a>
+                    <a href="${relativeUrl}" download class="btn btn-purple" style="width:auto; margin-top:10px; padding: 6px 20px;">Download High-Res Mockup</a>
                 </div>
             `;
         } else {
