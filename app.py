@@ -26,13 +26,13 @@ TEMPLATES_CONFIG = {
     "02_poster_flat": {
         "bg_image": "02_poster_flat.png",
         "placeholders": {
-            "poster_face": {"type": "flat", "x": 292, "y": 247, "w": 215, "h": 306}
+            "poster_face": {"type": "flat", "x": 195, "y": 170, "w": 525, "h": 745}
         }
     },
     "03_poster_hanging_clips": {
         "bg_image": "03_poster_hanging_clips.png",
         "placeholders": {
-            "poster_face": {"type": "flat", "x": 296, "y": 207, "w": 207, "h": 385}
+            "poster_face": {"type": "flat", "x": 296, "y": 207, "w": 410, "h": 585}
         }
     },
     "04_trifold_brochure": {
